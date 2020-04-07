@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			body{
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				left: 0;
+				top: 0;
+				overflow: hidden;
+			}
+			.box{
+				width: 100px;
+				height: 100px;
+				background: black;
+				position: absolute;
+				text-align: center;
+				line-height: 100px;
+				font-weight: bold;
+				color: white;
+				font-size: 40px;
+				cursor: pointer;
+				
+			}
+			.box-1{
+				background: #00aca0;
+				left: 45%;
+				bottom: 200px;
+			}
+			.box-2{
+				background: #4588df;
+				left: 170px;
+				top: 220px;
+			}
+			.box-3{
+				background: #DCDCDC;
+				left: 400px;
+				top: 420px;
+			}
+			.box-4{
+				background: #FF6D6D;
+				left: 600px;
+				top: 80px;
+			}
+			.bul-class{
+				position: absolute;
+				width: 10px;
+				height: 10px;
+				background: black;
+				border-radius: 50%;
+			}
+		</style>
+	</head>
+	<body>
+		
+		
+		<div class="box box-1">
+			1
+		</div>
+		
+		
+		
+		
+		
+		<script src="jquery-2.1.0.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			function aa(event,e){
+				$(e).css('left',event.pageX-50);
+				$(e).css('top',event.pageY-50);
+//				$("#box").c
+			}
+			
+			
+			var state = false;
+			$(".box").on('mousedown',function(){
+				console.log(event)
+				state = true;
+			})
+			$(".box").on('mouseup',function(){
+				state = false;
+			})
+			
+			$(".box").on('mousemove',function(){
+				if(state){
+					aa(event,this)
+				}
+			})
+			
+			var step = 1;
+			var hor = 1;	//
+			
+			function targetGo(type){
+				var targetX = $(".box").css('left').split('px')[0];
+				var targetY = $(".box").css('top').split('px')[0];
+				
+				var goX = 0;
+				var goY = 0;
+				if(type == 'top'){
+					goY = -Number(step);
+				}
+				if(type == 'down'){
+					goY = Number(step);
+				}
+				if(type == 'left'){
+					goX = -Number(step);
+				}
+				if(type == 'right'){
+					goX = Number(step);
+				}
+				
+				$(".box").css('left',Number(targetX)+Number(goX));
+				$(".box").css('top',Number(targetY)+Number(goY));
+			}
+			
+			function openFire(){
+				console.log('开火');
+				popBullet()
+			}
+			
+			function popBullet(type){
+				if(type == 'down'){
+					type = 'bottom';
+				}
+				
+				var clientW = document.body.clientWidth; 
+				var clientH = document.body.clientHeight; 
+				
+				var targetX = $(".box").offset().left;
+				var targetY = $(".box").offset().top;
+				var bul = document.createElement('div');
+				bul.className = 'bul-class'
+				if(type == 'left' ){
+					$(bul).css('top',Number(targetY)+50);
+					$(bul).css('left',Number(targetX)-10);
+				}else if(type == 'right'){
+					$(bul).css('top',Number(targetY)+50);
+					$(bul).css('right',Number(clientW - targetX)-110);
+				}else if(type == 'top'){
+					$(bul).css('left',Number(targetX)+50);
+					$(bul).css('top',Number(targetY)-10);
+				}else if(type == 'bottom'){
+					$(bul).css('left',Number(targetX)+50);
+					$(bul).css('bottom',Number(clientH - targetY)-110);
+				}
+				$('body').append(bul);
+				
+				
+				var bulTimmer = '';
+				if(hor == 1){
+					var horType = {
+						'top':'top','left':'left','right':'left','bottom':'top',
+					}
+					var horVal = {
+						'top':-2,'left':-2,'right':-2,'bottom':-2,
+					}
+					console.log($(bul).offset()[horType[type]]);
+					console.log($(bul).css(type).split('px')[0] +Number(horVal[type]))
+					bulTimmer = setInterval(function(){
+						$(bul).css(type,Number($(bul).css(type).split('px')[0]) + Number(horVal[type]));
+						if($(bul).css(type).split('px')[0] < 0){
+							bul.remove();
+							clearInterval(bulTimmer);
+						}
+					},2)
+				}
+				
+			}
+			
+			
+			var gunTimer = {
+				'top':false,
+				'left':false,
+				'right':false,
+				'down':false,
+				'fire':false,
+			}
+			var gunListener = {
+				'top':false,
+				'left':false,
+				'right':false,
+				'down':false,
+				'fire':false,
+			}
+			var rotateObj={
+				'top':0,
+				'left':270,
+				'right':90,
+				'down':180,
+			}
+			var checkTimer = false;
+			
+			var gun = {
+				goRot:'top',
+				gunRotate:function(type){
+					$(".box").css('transform','rotate(0deg)');
+					$(".box").css('transform','rotate('+rotateObj[type]+'deg)');
+				},
+				gunGo : function(type){
+					if(!gunTimer[type]){
+						if(type == 'fire'){
+							gun.gunFire(gun.goRot);
+						}else{
+							gunTimer[type] = setInterval(function(){
+								gun.goRot = type;
+								gun.gunRotate(type)
+								targetGo(type)
+							},5)
+						}
+					}
+				},
+				gunStop : function(type){
+					clearInterval(gunTimer[type]);
+					gunTimer[type] = false;
+				},
+				gunFire : function(type){
+					popBullet(type)
+					gunTimer['fire'] = setInterval(function(){
+						popBullet(type)
+					},100)
+				},
+				gunCheck : function(){
+					if(checkTimer){
+						
+					}else{
+						checkTimer = setInterval(function(){
+							for(i in gunListener){
+								if(gunListener[i]){
+									gun.gunGo(i)
+								}else{
+									gun.gunStop(i);
+								}
+							}
+						},100)
+					}
+				}
+			}
+			
+			$(document).keydown(function(event){
+				var type = '';
+				var e = event || window.event || arguments.callee.caller.arguments[0];
+				if(e && e.keyCode==87){
+					type = 'top';
+				}else if(e && e.keyCode==65){
+					type = 'left';
+				}else if(e && e.keyCode==83){
+					type = 'down';
+				}else if(e && e.keyCode==68){
+					type = 'right';
+				}
+				if(e && (e.keyCode==74 || e.keyCode==32)){
+//					gun.gunFire()
+					type = 'fire';
+				}
+				gunListener[type] = true;
+				gun.gunCheck();
+
+			});
+			
+			$(document).keyup(function(event){
+				
+				
+				var type = '';
+				var e = event || window.event || arguments.callee.caller.arguments[0];
+				if(e && e.keyCode==87){
+					type = 'top';
+				}else if(e && e.keyCode==65){
+					type = 'left';
+				}else if(e && e.keyCode==83){
+					type = 'down';
+				}else if(e && e.keyCode==68){
+					type = 'right';
+				}
+				if(e && (e.keyCode==74 || e.keyCode==32)){
+//					gun.gunFire()
+					type = 'fire';
+				}
+				gunListener[type] = false;
+				gun.gunCheck();
+			})
+			
+		</script>
+		
+	</body>
+</html>
